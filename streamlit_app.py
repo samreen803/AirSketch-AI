@@ -16,7 +16,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ---------------- DESIGN ----------------
+
+# ---------------- CUSTOM DESIGN ----------------
 
 st.markdown("""
 <style>
@@ -138,7 +139,7 @@ if page == "🏠 Home":
         st.markdown("""
         <div class="feature">
             <h3>🖌️ Drawing Tools</h3>
-            Use the brush, colours, eraser and shapes.
+            Brush, colours, eraser and shapes.
         </div>
         """, unsafe_allow_html=True)
 
@@ -164,7 +165,7 @@ if page == "🏠 Home":
 elif page == "🖼️ Drawing Workspace":
 
     st.title("🖼️ Drawing Workspace")
-    st.write("Choose a tool and create your artwork.")
+    st.write("Choose a tool and start creating!")
     st.divider()
 
     col1, col2, col3 = st.columns(3)
@@ -213,13 +214,12 @@ elif page == "🖼️ Drawing Workspace":
         width=800,
         drawing_mode=drawing_modes[tool],
         key=f"airs_ketch_canvas_{st.session_state.canvas_version}",
-        display_toolbar=True,
         update_streamlit=True,
     )
 
     st.caption(
         "Draw with your mouse or trackpad. "
-        "For the triangle tool, click points to create a polygon."
+        "The canvas toolbar may vary by installed package version."
     )
 
     st.divider()
@@ -261,9 +261,9 @@ elif page == "🖼️ Drawing Workspace":
             )
 
     st.info(
-        "The drawing canvas and PNG download are available here. "
+        "Drawing and PNG download are included. "
         "Dedicated undo/redo, webcam gestures and voice commands "
-        "are not connected yet."
+        "are not integrated yet."
     )
 
 
