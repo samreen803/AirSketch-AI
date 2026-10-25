@@ -1,11 +1,12 @@
-
-import streamlit as st
+=import streamlit as st
+from streamlit_drawable_canvas import st_canvas
+from PIL import Image
+import io
 
 st.set_page_config(
     page_title="AirSketch AI",
     page_icon="🎨",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
 st.markdown("""
@@ -14,39 +15,8 @@ st.markdown("""
     background: linear-gradient(135deg, #080b18, #11152b);
     color: #f4f5ff;
 }
-.block-container {
-    padding-top: 2rem;
-    max-width: 1200px;
-}
-[data-testid="stSidebar"] {
-    background-color: #10152a;
-}
-.hero {
-    padding: 30px;
-    border: 1px solid #34365e;
-    border-radius: 22px;
-    background: linear-gradient(120deg, #211b48, #102a40);
-    margin-bottom: 24px;
-}
-.hero h1 {
-    color: white;
-    font-size: 42px;
-}
-.hero p {
-    color: #c8cbed;
-    font-size: 17px;
-}
-.feature {
-    background: #151b32;
-    border: 1px solid #292f50;
-    border-radius: 16px;
-    padding: 20px;
-    min-height: 145px;
-    margin-bottom: 12px;
-}
-.feature h3 {
-    color: #b8a6ff;
-}
+h1, h2, h3 { color: #c4b5fd !important; }
+[data-testid="stSidebar"] { background: #10152a; }
 div.stButton > button {
     border-radius: 10px;
     border: 1px solid #8d78ff;
@@ -54,100 +24,128 @@ div.stButton > button {
 </style>
 """, unsafe_allow_html=True)
 
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
 with st.sidebar:
-    st.markdown("# 🎨 AirSketch AI")
+    st.title("🎨 AirSketch AI")
     st.caption("Intelligent Virtual Painter")
     page = st.radio(
         "NAVIGATION",
-        ["🏠 Home", "🖼️ Drawing Workspace", "ℹ️ About Project"]
+        ["Home", "Drawing Workspace", "About Project"],
+        key="navigation"
     )
+    st.session_state.page = page
     st.divider()
     st.caption("MCA Mini Project")
 
-if page == "🏠 Home":
-    st.markdown("""
-    <div class="hero">
-        <h1>🎨 AirSketch AI</h1>
-        <p>Turn your creativity into digital art.</p>
-        <p>An intelligent gesture-based virtual drawing system.</p>
-    </div>
-    """, unsafe_allow_html=True)
+if page == "Home":
+    st.title("🎨 AirSketch AI")
+    st.subheader("Turn your creativity into digital art.")
+    st.write(
+        "Create digital artwork with our browser-based "
+        "virtual drawing workspace."
+    )
 
-    st.subheader("✨ Explore Your Creative Workspace")
+    c1, c2, c3 = st.columns(3)
+    c1.info("🖐️ **Hand Gestures**\n\nPlanned browser webcam integration")
+    c2.info("🖌️ **Drawing Tools**\n\nBrush, colours, eraser and shapes")
+    c3.info("🔷 **Shape Recognition**\n\nBasic shape tools")
+
+    if st.button("🚀 Open Drawing Workspace", use_container_width=True):
+        st.session_state.navigation = "Drawing Workspace"
+        st.rerun()
+
+elif page == "Drawing Workspace":
+    st.title("🖼️ Drawing Workspace")
+    st.write("Select a tool and start drawing!")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("""
-        <div class="feature">
-        <h3>🖐️ Hand Gestures</h3>
-        Draw using hand movements with webcam tracking.
-        </div>
-        """, unsafe_allow_html=True)
+        tool = st.selectbox(
+            "Drawing tool",
+            ["Brush", "Line", "Rectangle", "Circle", "Eraser"]
+        )
 
     with col2:
-        st.markdown("""
-        <div class="feature">
-        <h3>🖌️ Drawing Tools</h3>
-        Brush, colours, eraser and drawing controls.
-        </div>
-        """, unsafe_allow_html=True)
+        color = st.color_picker("Brush colour", "#8D78FF")
 
     with col3:
-        st.markdown("""
-        <div class="feature">
-        <h3>🔷 Shape Recognition</h3>
-        Recognize basic shapes using AI techniques.
-        </div>
-        """, unsafe_allow_html=True)
+        width = st.slider("Brush size", 1, 30, 5)
 
-    st.write("")
-    if st.button("🚀 Open Drawing Workspace", use_container_width=True):
-        st.session_state["navigation_page"] = "🖼️ Drawing Workspace"
-        st.rerun()
+    mode_map = {
+        "Brush": "freedraw",
+        "Line": "line",
+        "Rectangle": "rect",
+        "Circle": "circle",
+        "Eraser": "freedraw"
+    }
 
-elif page == "🖼️ Drawing Workspace":
-    st.title("🖼️ Drawing Workspace")
-    st.write("Upload an image to preview it in your workspace.")
+    stroke_color = "#FFFFFF" if tool == "Eraser" else color
 
-    uploaded_file = st.file_uploader(
-        "Choose an image",
-        type=["png", "jpg", "jpeg"]
+    if "canvas_key" not in st.session_state:
+        st.session_state.canvas_key = 0
+
+    canvas_result = st_canvas(
+        fill_color="rgba(141, 120, 255, 0.15)",
+        stroke_width=width,
+        stroke_color=stroke_color,
+        background_color="#FFFFFF",
+        height=450,
+        width=800,
+        drawing_mode=mode_map[tool],
+        key=f"canvas_{st.session_state.canvas_key}",
+        display_toolbar=True,
+        update_streamlit=True,
+        return_image_data=True
     )
 
-    if uploaded_file:
-        st.image(
-            uploaded_file,
-            caption="Your artwork",
-            use_container_width=True
-        )
-    else:
-        st.info("Your image preview will appear here after uploading.")
+    b1, b2 = st.columns(2)
 
-    st.warning(
-        "Live webcam gesture drawing is not connected to this web "
-        "workspace yet. It requires browser-compatible hand tracking."
+    with b1:
+        if st.button("🗑️ Clear Canvas", use_container_width=True):
+            st.session_state.canvas_key += 1
+            st.rerun()
+
+    with b2:
+        if canvas_result.image_data is not None:
+            image = Image.fromarray(
+                canvas_result.image_data.astype("uint8")
+            ).convert("RGB")
+
+            output = io.BytesIO()
+            image.save(output, format="PNG")
+
+            st.download_button(
+                "⬇️ Download Artwork",
+                data=output.getvalue(),
+                file_name="airs_ketch_artwork.png",
+                mime="image/png",
+                use_container_width=True
+            )
+
+    st.caption(
+        "Note: Eraser uses the white canvas background. "
+        "Undo/redo, webcam gestures and voice commands "
+        "will need additional integration."
     )
 
-elif page == "ℹ️ About Project":
+elif page == "About Project":
     st.title("ℹ️ About AirSketch AI")
     st.write(
-        "AirSketch AI is a Python-based project designed to support "
-        "virtual drawing using hand gestures."
+        "AirSketch AI is a Python-based virtual drawing "
+        "project designed around gesture recognition."
     )
-
     st.subheader("Technology Stack")
-    st.write("Python • OpenCV • MediaPipe • Tkinter • SQLite")
-
+    st.write("Python • Streamlit • OpenCV • MediaPipe • Pillow")
     st.subheader("Project Features")
     st.markdown("""
-    - Gesture-based virtual drawing
-    - Brush, eraser and colour selection
-    - Undo and redo
-    - Drawing saving
-    - User login and registration
-    - Shape recognition
-    - Voice commands
+    - Digital drawing tools and colour selection
+    - Artwork download
+    - Browser-based workspace
+    - Planned webcam gesture and voice integration
+    - Planned login and registration
     """)
 
 st.divider()
